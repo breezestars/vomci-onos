@@ -15,4 +15,5 @@ pipeline:
     commands:
       - export ONOS_ROOT=$(pwd)
       - source $ONOS_ROOT/tools/dev/bash_profile
+      - ./tools/build/onos-buck test
       - bazel build onos
