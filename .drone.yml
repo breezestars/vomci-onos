@@ -1,0 +1,18 @@
+workspace:
+  base: /go/src
+  path: github.com/breezestars/vomci-onos
+
+clone:
+  git:
+    image: plugins/git
+    depth: 50
+    tags: true
+
+pipeline:
+  build_test:
+    image: java:8
+    group: build
+    commands:
+      - export ONOS_ROOT=$(pwd)
+      - source $ONOS_ROOT/tools/dev/bash_profile
+      - bazel build onos
