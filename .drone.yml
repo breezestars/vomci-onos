@@ -1,0 +1,23 @@
+workspace:
+  base: /go/src
+  path: github.com/breezestars/vomci-onos
+
+clone:
+  git:
+    image: plugins/git
+    depth: 50
+    tags: true
+
+pipeline:
+  build_test:
+    image: java:8
+    group: build
+    commands:
+      - export ONOS_ROOT=$(pwd)
+      - source $ONOS_ROOT/tools/dev/bash_profile
+      - ./tools/build/onos-buck test
+      - bazel build onos
+
+  line:
+    image: appleboy/drone-line
+    secrets: [ line_channel_secret, line_channel_token, line_to, line_to_room ] #room:R7dc3967fce85d28ef58fa0fa4691a8c4
