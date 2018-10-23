@@ -10,12 +10,15 @@ clone:
 
 pipeline:
   build_test:
-    image: java:8
+    image: appleboy/golang-testing:1.10.0
     group: build
     commands:
+      - ls
       - make check
       - make build
 
   line:
     image: appleboy/drone-line
     secrets: [ line_channel_secret, line_channel_token, line_to, line_to_room ]
+    when:
+      status: [ changed, failure ]
