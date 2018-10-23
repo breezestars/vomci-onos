@@ -13,10 +13,8 @@ pipeline:
     image: java:8
     group: build
     commands:
-      - export ONOS_ROOT=$(pwd)
-      - source $ONOS_ROOT/tools/dev/bash_profile
-      - ./tools/build/onos-buck test
-      - bazel build onos
+      - make check
+      - make build
 
   line:
     image: appleboy/drone-line
