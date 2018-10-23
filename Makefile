@@ -1,24 +1,26 @@
 SHELL := /bin/bash
+CMD := 
 ONOS_ROOT := $(shell pwd)
-.PHONY: path
-path:
-	export ONOS_ROOT=$(ONOS_ROOT)
-
-.PHONY: config
-config: path
-	source $$ONOS_ROOT/tools/dev/bash_profile
+BASH_SET := $(shell bash -c "ONOS_ROOT=$(ONOS_ROOT) && source $(ONOS_ROOT)/tools/dev/bash_profile;$(CMD)")
 
 .PHONY: check
-check: config
-	$$ONOS_ROOT/tools/build/onos-buck test
+check:
+	$(shell bash -c "ONOS_ROOT=$(ONOS_ROOT) && source $(ONOS_ROOT)/tools/dev/bash_profile;$(ONOS_ROOT)/tools/build/onos-buck test>&2;")
 
 .PHONY: build
-build: config
-	onos-package
+build:
+	$(shell bash -c "ONOS_ROOT=$(ONOS_ROOT); \
+	 source $(ONOS_ROOT)/tools/dev/bash_profile; \
+	  onos-package>&2; \
+	  ")
+	
 
 .PHONY: run
 run:
-	NO_BUCKD=1 onos-buck run onos-local -- debug
+	$(shell bash -c "ONOS_ROOT=$(ONOS_ROOT); \
+	 source $(ONOS_ROOT)/tools/dev/bash_profile; \
+	  NO_BUCKD=1 onos-buck run onos-local -- debug >&2; \
+	  ")
 
 .PHONY: web
 web:
