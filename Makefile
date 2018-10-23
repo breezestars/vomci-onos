@@ -5,14 +5,22 @@ BASH_SET := $(shell bash -c "ONOS_ROOT=$(ONOS_ROOT) && source $(ONOS_ROOT)/tools
 
 .PHONY: check
 check:
-	$(shell bash -c "ONOS_ROOT=$(ONOS_ROOT) && source $(ONOS_ROOT)/tools/dev/bash_profile;$(ONOS_ROOT)/tools/build/onos-buck test>&2;")
+	@checkResult=$(shell bash -c "ONOS_ROOT=$(ONOS_ROOT) && source $(ONOS_ROOT)/tools/dev/bash_profile;$(ONOS_ROOT)/tools/build/onos-buck test>&2;"); \
+	if [ $$? -ne 0 ]; then \
+		echo -e "\033[0;31mCheck Failure"; \
+		exit 1; \
+	fi;
 
 .PHONY: build
 build:
-	$(shell bash -c "ONOS_ROOT=$(ONOS_ROOT); \
+	 @buildResult=$(shell bash -c "ONOS_ROOT=$(ONOS_ROOT); \
 	 source $(ONOS_ROOT)/tools/dev/bash_profile; \
 	  onos-package>&2; \
-	  ")
+	  "); \
+	if [ $$? -ne 0 ]; then \
+		echo -e "\033[0;31mBuild Failure"; \
+		exit 1; \
+	fi;
 	
 
 .PHONY: run
