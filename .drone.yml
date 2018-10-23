@@ -20,4 +20,4 @@ pipeline:
 
   line:
     image: appleboy/drone-line
-    secrets: [ line_channel_secret, line_channel_token, line_to, line_to_room ] #room:R7dc3967fce85d28ef58fa0fa4691a8c4
+    secrets: [ line_channel_secret, line_channel_token, line_to, line_to_room ]
