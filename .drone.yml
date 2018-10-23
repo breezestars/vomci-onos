@@ -10,12 +10,17 @@ clone:
 
 pipeline:
   build_test:
-    image: java:8
+    image: madduci/docker-ubuntu-cpp
     group: build
     commands:
-      - make check
-      - make build
+      - export ONOS_ROOT=$(pwd)
+      - chmod a+x $ONOS_ROOT/tools/dev/bash_profile
+      - $ONOS_ROOT/tools/dev/bash_profile
+      - ./tools/build/onos-buck test
+      - bazel build onos
 
   line:
     image: appleboy/drone-line
     secrets: [ line_channel_secret, line_channel_token, line_to, line_to_room ]
+    when:
+      status: [ changed, failure ]
