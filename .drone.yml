@@ -10,14 +10,14 @@ clone:
 
 pipeline:
   build_test:
-    image: madduci/docker-ubuntu-cpp
+    image: breezestars/mars-test:0.1
     group: build
     commands:
+      - echo "-Xmx16g" > .buckjavaargs
       - export ONOS_ROOT=$(pwd)
       - chmod a+x $ONOS_ROOT/tools/dev/bash_profile
       - $ONOS_ROOT/tools/dev/bash_profile
       - ./tools/build/onos-buck test
-      - bazel build onos
 
   line:
     image: appleboy/drone-line
