@@ -1,6 +1,6 @@
 workspace:
   base: /go/src
-  path: github.com/jiejhih/onos
+  path: github.com/vomci/onos
 
 clone:
   git:
@@ -12,11 +12,12 @@ pipeline:
   build_test:
     image: jiejhih/vomci-test:v1
     environment:
-      - ONOS_ROOT=/go/src/github.com/jiejhih/onos
+      - ONOS_ROOT=/go/src/github.com/vomci/onos
     pull: true
     privileged: true
     network_mode: host
     commands:
+      - ./tools/build/onos-buck test
       - tools/build/onos-buck build onos
 
   line:
