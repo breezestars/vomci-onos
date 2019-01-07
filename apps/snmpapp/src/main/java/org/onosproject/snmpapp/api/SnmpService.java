@@ -9,5 +9,7 @@ import java.util.List;
 import java.io.IOException;
 
 public interface SnmpService {
-    public List<TreeEvent> get(DeviceId did, OID oid) throws IOException;
+    public List<TreeEvent> walk(DeviceId did, OID oid) throws IOException;
+
+    public String get(DeviceId did, OID oid) throws IOException;
 }

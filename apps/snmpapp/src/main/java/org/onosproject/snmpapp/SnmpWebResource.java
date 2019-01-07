@@ -39,22 +39,41 @@ public class SnmpWebResource extends AbstractWebResource {
 
     private SnmpService snmpService = get(SnmpService.class);
     /**
-     * Get MIB by OID.
+     * SNMP Walk with OID.
      *
      * @param DeviceID Device ID for query.
      * @param OID Object ID for query.
      * @return 200 OK
      */
     @GET
-    @Path("{DeviceID}/{OID}")
-    public Response get(@PathParam("DeviceID") String deviceId, @PathParam("OID") String oid) {
+    @Path("/walk/{DeviceID}/{OID}")
+    public Response walk(@PathParam("DeviceID") String deviceId, @PathParam("OID") String oid) {
         ObjectNode node = mapper().createObjectNode();
         try {
             DeviceId did = DeviceId.deviceId(deviceId);
             SnmpDevice device = controller.getDevice(did);
             node.put("host", device.getSnmpHost());
-            List<TreeEvent> mibs = snmpService.get(did, new OID(oid));
-            log.info(mibs.get(0).toString());
+            List<TreeEvent> mibs = snmpService.walk(did, new OID(oid));
+            log.info("size "+Integer.toString(mibs.size()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ok(node).build();
+    }
+    /**
+     * SNMP Get with OID.
+     * @param DeviceID Device ID for query.
+     * @param OID Object ID for query.
+     * @return 200 OK
+     */
+    @GET
+    @Path("/get/{DeviceID}/{OID}")
+    public Response get(@PathParam("DeviceID") String deviceId, @PathParam("OID") String oid) {
+        ObjectNode node = mapper().createObjectNode();
+        try {
+            DeviceId did = DeviceId.deviceId(deviceId);
+            String res = snmpService.get(did, new OID(oid));
+            node.put(oid, res);
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -10,11 +10,14 @@ import org.onosproject.snmpapp.api.SnmpService;
 import org.onosproject.net.DeviceId;
 import org.onosproject.snmp.SnmpController;
 import org.onosproject.snmp.SnmpDevice;
+import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.smi.Address;
 import org.snmp4j.smi.GenericAddress;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.OctetString;
+import org.snmp4j.smi.VariableBinding;
+import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
 import org.snmp4j.TransportMapping;
 import org.snmp4j.CommunityTarget;
@@ -53,7 +56,7 @@ public class DefaultSnmpService implements SnmpService {
     }
 
     @Override
-    public List<TreeEvent> get(DeviceId did, OID oid) throws IOException {
+    public List<TreeEvent> walk(DeviceId did, OID oid) throws IOException {
         SnmpDevice device = snmpController.getDevice(did);
         String deviceHost = device.getSnmpHost();
         String devicePort = Integer.toString(device.getSnmpPort());
@@ -63,7 +66,32 @@ public class DefaultSnmpService implements SnmpService {
         CommunityTarget target = setTarget(deviceHost, devicePort, "v2c");
         TreeUtils treeUtils = new TreeUtils(snmp, new DefaultPDUFactory());
         treeUtils.setMaxRepetitions(MAX_REPETITIONS);
+        // TODO add more notification and transport close for good.
         return treeUtils.getSubtree(target, oid);
+    }
+
+    @Override
+    public String get(DeviceId did, OID oid) throws IOException {
+        SnmpDevice device = snmpController.getDevice(did);
+        String deviceHost = device.getSnmpHost();
+        String devicePort = Integer.toString(device.getSnmpPort());
+
+        PDU pdu = new PDU();
+        pdu.setType(PDU.GET);
+        pdu.add(new VariableBinding(oid));
+        TransportMapping transport = new DefaultUdpTransportMapping();
+        transport.listen();
+        Snmp snmp = new Snmp(transport);
+        CommunityTarget target = setTarget(deviceHost, devicePort, "v2c");
+        ResponseEvent response = snmp.send(pdu, target);
+        PDU res = response.getResponse();
+        if (res == null) {
+            return "Get Nothing";
+        } else {
+            // get multiple response by adding VB to the sender PDU.
+            VariableBinding vb = res.get(0);
+            return vb.getVariable().toString();
+        }
     }
 
     private CommunityTarget setTarget(String host, String port, String snmpVersion) {
