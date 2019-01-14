@@ -1,24 +1,35 @@
+/*
+ * Copyright 2016-present Open Networking Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.onosproject.snmpapp;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.device.DeviceService;
-import org.onosproject.net.DeviceId;
 import org.onosproject.rest.AbstractWebResource;
 import org.onosproject.snmpapp.api.SnmpService;
 import org.onosproject.snmp.SnmpController;
 import org.onosproject.snmp.SnmpDevice;
 import org.snmp4j.util.TreeEvent;
 import org.snmp4j.smi.OID;
+import org.snmp4j.smi.VariableBinding;
 import org.slf4j.Logger;
 
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import java.io.IOException;
@@ -41,8 +52,8 @@ public class SnmpWebResource extends AbstractWebResource {
     /**
      * SNMP Walk with OID.
      *
-     * @param DeviceID Device ID for query.
-     * @param OID Object ID for query.
+     * @param deviceId Device ID for query.
+     * @param oid Object ID for query.
      * @return 200 OK
      */
     @GET
@@ -54,7 +65,11 @@ public class SnmpWebResource extends AbstractWebResource {
             SnmpDevice device = controller.getDevice(did);
             node.put("host", device.getSnmpHost());
             List<TreeEvent> mibs = snmpService.walk(did, new OID(oid));
-            log.info("size "+Integer.toString(mibs.size()));
+            //log.info("size "+Integer.toString(mibs.size()));
+            TreeEvent te = mibs.get(0);
+            for (VariableBinding vb : te.getVariableBindings()) {
+                node.put(vb.getOid().toString(), vb.getVariable().toString());
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -62,8 +77,8 @@ public class SnmpWebResource extends AbstractWebResource {
     }
     /**
      * SNMP Get with OID.
-     * @param DeviceID Device ID for query.
-     * @param OID Object ID for query.
+     * @param deviceId Device ID for query.
+     * @param oid Object ID for query.
      * @return 200 OK
      */
     @GET
@@ -73,6 +88,28 @@ public class SnmpWebResource extends AbstractWebResource {
         try {
             DeviceId did = DeviceId.deviceId(deviceId);
             String res = snmpService.get(did, new OID(oid));
+            node.put(oid, res);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ok(node).build();
+    }
+
+    /**
+     * SNMP Set with OID.
+     * @param deviceId Device ID for query.
+     * @param oid Object ID for query.
+     * @param val The value want to set.
+     * @return 200 OK
+     */
+    @GET
+    @Path("/set/{DeviceID}/{OID}/{Value}")
+    public Response set(@PathParam("DeviceID") String deviceId, @PathParam("OID") String oid,
+            @PathParam("Value") String val) {
+        ObjectNode node = mapper().createObjectNode();
+        try {
+            DeviceId did = DeviceId.deviceId(deviceId);
+            String res = snmpService.set(did, new OID(oid), val);
             node.put(oid, res);
         } catch (IOException e) {
             e.printStackTrace();

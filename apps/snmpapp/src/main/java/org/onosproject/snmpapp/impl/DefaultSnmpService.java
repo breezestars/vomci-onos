@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018-present Open Networking Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.onosproject.snmpapp.impl;
 
 import org.apache.felix.scr.annotations.Activate;
@@ -16,6 +31,7 @@ import org.snmp4j.smi.Address;
 import org.snmp4j.smi.GenericAddress;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.OctetString;
+import org.snmp4j.smi.Variable;
 import org.snmp4j.smi.VariableBinding;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
@@ -71,6 +87,36 @@ public class DefaultSnmpService implements SnmpService {
     }
 
     @Override
+    public String set(DeviceId did, OID oid, String val) throws IOException {
+        SnmpDevice device = snmpController.getDevice(did);
+        String deviceHost = device.getSnmpHost();
+        String devicePort = Integer.toString(device.getSnmpPort());
+
+        PDU pdu = new PDU();
+        pdu.setType(PDU.SET);
+        VariableBinding vb;
+        Variable v = new OctetString(val);
+        vb = new VariableBinding(oid, v);
+        pdu.add(vb);
+        TransportMapping transport = new DefaultUdpTransportMapping();
+        transport.listen();
+        Snmp snmp = new Snmp(transport);
+        CommunityTarget target = setTarget(deviceHost, devicePort, "v2c");
+        ResponseEvent response = snmp.send(pdu, target);
+        transport.close();
+        if (response == null) {
+            return "set failed";
+        } else {
+            PDU res = response.getResponse();
+            if (pdu.getErrorStatus() == PDU.noError) {
+                return val;
+            } else {
+                return "set unsuccessful";
+            }
+        }
+    }
+
+    @Override
     public String get(DeviceId did, OID oid) throws IOException {
         SnmpDevice device = snmpController.getDevice(did);
         String deviceHost = device.getSnmpHost();
@@ -84,6 +130,7 @@ public class DefaultSnmpService implements SnmpService {
         Snmp snmp = new Snmp(transport);
         CommunityTarget target = setTarget(deviceHost, devicePort, "v2c");
         ResponseEvent response = snmp.send(pdu, target);
+        transport.close();
         PDU res = response.getResponse();
         if (res == null) {
             return "Get Nothing";
@@ -95,15 +142,19 @@ public class DefaultSnmpService implements SnmpService {
     }
 
     private CommunityTarget setTarget(String host, String port, String snmpVersion) {
+        return setTarget(host, port, snmpVersion, "public");
+    }
+
+    private CommunityTarget setTarget(String host, String port, String snmpVersion, String community) {
         CommunityTarget target;
         Address targetAddress = GenericAddress.parse("udp:" + host + "/" + port);
 
         target = new CommunityTarget();
-        target.setCommunity(new OctetString("public"));
+        target.setCommunity(new OctetString(community));
         target.setAddress(targetAddress);
         target.setRetries(3);
         target.setTimeout(1000L * 3L);
-        switch(snmpVersion) {
+        switch (snmpVersion) {
             case "v1":
                 target.setVersion(SnmpConstants.version1);
                 break;
