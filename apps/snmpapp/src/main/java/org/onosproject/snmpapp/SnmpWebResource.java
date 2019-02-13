@@ -16,6 +16,7 @@
 package org.onosproject.snmpapp;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.device.DeviceService;
 import org.onosproject.rest.AbstractWebResource;
@@ -28,12 +29,18 @@ import org.snmp4j.smi.VariableBinding;
 import org.slf4j.Logger;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.core.MediaType;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Iterator;
 import java.util.List;
+import static org.onlab.util.Tools.readTreeFromStream;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -98,19 +105,25 @@ public class SnmpWebResource extends AbstractWebResource {
     /**
      * SNMP Set with OID.
      * @param deviceId Device ID for query.
-     * @param oid Object ID for query.
-     * @param val The value want to set.
+     * @param request The Json with values to be set.
      * @return 200 OK
+     * @throws IOException if parsing has error.
      */
-    @GET
-    @Path("/set/{DeviceID}/{OID}/{Value}")
-    public Response set(@PathParam("DeviceID") String deviceId, @PathParam("OID") String oid,
-            @PathParam("Value") String val) {
+    @POST
+    @Path("/set/{DeviceID}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response set(@PathParam("DeviceID") String deviceId, InputStream  request) throws IOException {
         ObjectNode node = mapper().createObjectNode();
+        // use JsonNode for iterating easily.
+        JsonNode root = readTreeFromStream(mapper(), request);
         try {
             DeviceId did = DeviceId.deviceId(deviceId);
-            String res = snmpService.set(did, new OID(oid), val);
-            node.put(oid, res);
+            for (Iterator<String> it = root.fieldNames(); it.hasNext();) {
+                String key = it.next();
+                String val = root.get(key).asText();
+                String res = snmpService.set(did, new OID(key), val);
+                node.put(key, res);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
