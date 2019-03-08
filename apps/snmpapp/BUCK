@@ -1,0 +1,29 @@
+COMPILE_DEPS = [
+    '//lib:CORE_DEPS',
+    '//lib:JACKSON',
+    '//lib:KRYO',
+    '//lib:javax.ws.rs-api',
+    '//utils/rest:onlab-rest',
+    '//protocols/snmp/api:onos-protocols-snmp-api',
+    '//lib:org.apache.servicemix.bundles.snmp4j',
+    '//lib:snmp-core',
+    '//lib:bti7000',
+    '//lib:mibs-net-snmp',
+    '//lib:mibs-rfc',
+]
+
+osgi_jar_with_tests (
+    deps = COMPILE_DEPS,
+    web_context = '/onos/v1/snmp',
+    api_title = 'SNMP API',
+    api_version = '1.0',
+    api_description = 'REST API for SNMP app',
+    api_package = 'org.onosproject.snmpapp',
+)
+
+onos_app (
+    title = 'SNMP APP',
+    category = 'Protocol',
+    url = 'http://onosproject.org',
+    description = 'ONOS SNMP application.',
+)
